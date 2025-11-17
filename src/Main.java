@@ -1,7 +1,13 @@
 import java.util.*;
 import java.util.concurrent.*;
 
-// Main.java - Self-contained testing & grading with multiple built‑in test cases.
+/**
+ * Main entry point and automated test harness for the LonghornNetwork project.
+ *
+ * This class builds a number of built-in test cases, runs automated grading
+ * checks (graph reciprocity, roommate assignment, threading behavior, and
+ * referral path finding) and prints scores for each test case.
+ */
 public class Main {
     public static void main(String[] args) {
         // Create a list of test cases.
@@ -32,87 +38,99 @@ public class Main {
         System.out.println("Average Score across all test cases: " + (overallScore / count));
     }
 
-    // Test Case 1: Two groups (Group 1 with four students having mutual preferences, Group 2 with a pair)
+    /**
+     * Generate test case 1: two groups of students. The first group contains
+     * four students with mutual roommate preferences; the second group is a
+     * pair of students.
+     *
+     * @return a list of {@link UniversityStudent} objects representing the test
+     *         data
+     */
     public static List<UniversityStudent> generateTestCase1() {
         List<UniversityStudent> students = new ArrayList<>();
 
         // Group 1: 4 students with full mutual roommate preferences.
         students.add(new UniversityStudent(
                 "Alice", 20, "Female", 2, "Computer Science", 3.5,
-                Arrays.asList("Bob", "Charlie", "Frank"), Arrays.asList("Google")
-        ));
+                Arrays.asList("Bob", "Charlie", "Frank"), Arrays.asList("Google")));
         students.add(new UniversityStudent(
                 "Bob", 21, "Male", 3, "Computer Science", 3.7,
-                Arrays.asList("Alice", "Charlie", "Frank"), Arrays.asList("Google", "Microsoft")
-        ));
+                Arrays.asList("Alice", "Charlie", "Frank"), Arrays.asList("Google", "Microsoft")));
         students.add(new UniversityStudent(
                 "Charlie", 20, "Male", 2, "Mathematics", 3.2,
-                Arrays.asList("Alice", "Bob", "Frank"), Arrays.asList("None")
-        ));
+                Arrays.asList("Alice", "Bob", "Frank"), Arrays.asList("None")));
         students.add(new UniversityStudent(
                 "Frank", 23, "Male", 3, "Chemistry", 3.1,
-                Arrays.asList("Alice", "Bob", "Charlie"), Arrays.asList()
-        ));
+                Arrays.asList("Alice", "Bob", "Charlie"), Arrays.asList()));
 
         // Group 2: 2 students
         students.add(new UniversityStudent(
                 "Dana", 22, "Female", 4, "Biology", 3.8,
-                Arrays.asList("Evan"), Arrays.asList("Pfizer")
-        ));
+                Arrays.asList("Evan"), Arrays.asList("Pfizer")));
         students.add(new UniversityStudent(
                 "Evan", 22, "Male", 4, "Biology", 3.6,
-                Arrays.asList("Dana"), Arrays.asList("Moderna", "Pfizer")
-        ));
-
-        return students;
-    }
-
-    // Test Case 2: Three students in which one has "DummyCompany" as a previous internship.
-    // This test case should yield a referral path when searching for "DummyCompany".
-    public static List<UniversityStudent> generateTestCase2() {
-        List<UniversityStudent> students = new ArrayList<>();
-
-        students.add(new UniversityStudent(
-                "Greg", 24, "Male", 4, "Economics", 3.4,
-                Arrays.asList("Helen", "Ivy"), Arrays.asList("InternshipA")
-        ));
-        students.add(new UniversityStudent(
-                "Helen", 24, "Female", 4, "Economics", 3.5,
-                Arrays.asList("Greg", "Ivy"), Arrays.asList("InternshipB")
-        ));
-        students.add(new UniversityStudent(
-                "Ivy", 25, "Female", 4, "Economics", 3.8,
-                Arrays.asList("Helen", "Greg"), Arrays.asList("DummyCompany")
-        ));
-
-        return students;
-    }
-
-    // Test Case 3: Three students where one has no roommate preferences.
-    // Two of them can be paired and one remains unpaired.
-    public static List<UniversityStudent> generateTestCase3() {
-        List<UniversityStudent> students = new ArrayList<>();
-
-        students.add(new UniversityStudent(
-                "Jack", 19, "Male", 1, "History", 3.0,
-                Arrays.asList("Kim"), Arrays.asList("MuseumIntern")
-        ));
-        students.add(new UniversityStudent(
-                "Kim", 19, "Female", 1, "History", 3.2,
-                Arrays.asList("Jack"), Arrays.asList("MuseumIntern")
-        ));
-        students.add(new UniversityStudent(
-                "Leo", 20, "Male", 1, "History", 3.5,
-                Collections.emptyList(), Arrays.asList("None")
-        ));
+                Arrays.asList("Dana"), Arrays.asList("Moderna", "Pfizer")));
 
         return students;
     }
 
     /**
-     * Automated test suite for grading a given test case.
-     * Accepts a list of UniversityStudent objects and a testCaseNumber (for output clarity).
-     * Returns an integer score.
+     * Generate test case 2: three students where one student has
+     * "DummyCompany" in the previous internships list. This is used to test
+     * referral path finding.
+     *
+     * @return a list of {@link UniversityStudent} objects representing the test
+     *         data
+     */
+    public static List<UniversityStudent> generateTestCase2() {
+        List<UniversityStudent> students = new ArrayList<>();
+
+        students.add(new UniversityStudent(
+                "Greg", 24, "Male", 4, "Economics", 3.4,
+                Arrays.asList("Helen", "Ivy"), Arrays.asList("InternshipA")));
+        students.add(new UniversityStudent(
+                "Helen", 24, "Female", 4, "Economics", 3.5,
+                Arrays.asList("Greg", "Ivy"), Arrays.asList("InternshipB")));
+        students.add(new UniversityStudent(
+                "Ivy", 25, "Female", 4, "Economics", 3.8,
+                Arrays.asList("Helen", "Greg"), Arrays.asList("DummyCompany")));
+
+        return students;
+    }
+
+    /**
+     * Generate test case 3: three students where one student has no roommate
+     * preferences. Two of them should be pairable while one remains unpaired.
+     *
+     * @return a list of {@link UniversityStudent} objects representing the test
+     *         data
+     */
+    public static List<UniversityStudent> generateTestCase3() {
+        List<UniversityStudent> students = new ArrayList<>();
+
+        students.add(new UniversityStudent(
+                "Jack", 19, "Male", 1, "History", 3.0,
+                Arrays.asList("Kim"), Arrays.asList("MuseumIntern")));
+        students.add(new UniversityStudent(
+                "Kim", 19, "Female", 1, "History", 3.2,
+                Arrays.asList("Jack"), Arrays.asList("MuseumIntern")));
+        students.add(new UniversityStudent(
+                "Leo", 20, "Male", 1, "History", 3.5,
+                Collections.emptyList(), Arrays.asList("None")));
+
+        return students;
+    }
+
+    /**
+     * Run automated tests on a provided test case and return a numeric score.
+     *
+     * The grading executes a battery of checks (graph integrity, matching,
+     * multithreaded components, referral path finding) and prints diagnostic
+     * output to the console. The returned integer is the aggregated score.
+     *
+     * @param students       list of {@link UniversityStudent} instances to test
+     * @param testCaseNumber friendly index used for console output
+     * @return aggregated integer score for the test case
      */
     public static int gradeLab(List<UniversityStudent> students, int testCaseNumber) {
         int score = 0;
@@ -134,7 +152,8 @@ public class Main {
                         }
                     }
                     if (!reciprocalFound) {
-                        throw new Exception("Graph edge from " + s.name + " to " + neighbor.name + " is not reciprocal.");
+                        throw new Exception(
+                                "Graph edge from " + s.name + " to " + neighbor.name + " is not reciprocal.");
                     }
                 }
             }
@@ -198,8 +217,10 @@ public class Main {
         try {
             StudentGraph graph = new StudentGraph(students);
             ReferralPathFinder pathFinder = new ReferralPathFinder(graph);
-            // For test case 2, we expect a non-empty referral path when searching for "DummyCompany".
-            // For test cases that don't have that internship, the returned path may be empty.
+            // For test case 2, we expect a non-empty referral path when searching for
+            // "DummyCompany".
+            // For test cases that don't have that internship, the returned path may be
+            // empty.
             List<UniversityStudent> path = pathFinder.findReferralPath(students.get(0), "DummyCompany");
             System.out.println("ReferralPathFinder returned path: " + path);
             if (testCaseNumber == 2 && path.isEmpty()) {
@@ -219,4 +240,3 @@ public class Main {
         return score;
     }
 }
-

@@ -1,0 +1,22 @@
+digraph UML {
+  rankdir=TB;
+  nodesep=0.8;
+  ranksep=1.2;
+  node [shape=record, fontname="Arial", fontsize="10", margin="0.2,0.15", style="filled,rounded", color="black", fillcolor="white"];
+  edge [fontname="Arial", fontsize="9", labelfontsize="10"];
+  bgcolor=white;
+
+  "ChatThread" [label="\{ChatThread\|+ run(): void\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "FriendRequestThread" [label="\{FriendRequestThread\|+ run(): void\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "PodFormation" [label="\{PodFormation\|+ PodFormation: class\|+ formPods(podSize: int): void\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "ReferralPathFinder" [label="\{ReferralPathFinder\|+ ReferralPathFinder: class\|+ findReferralPath(start: UniversityStudent, targetCompany: String): List\<UniversityStudent\>\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "StudentGraph" [label="\{StudentGraph\|+ StudentGraph: class\\n+* Edge: class\\n+ neighbor: UniversityStudent\\n+ weight: int\|~ Edge(neighbor: UniversityStudent, weight: int): public\\n+ getAllNodes(): List\<UniversityStudent\>\\n+ getNeighbors(s: UniversityStudent): List\<Edge\>\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "builds" [label="\{builds\|+ Main: class\\n~ overallScore: int\\n~ count: int\\n~ tc: List\<UniversityStudent\>\\n~ score: int\\n~ students: List\<UniversityStudent\>\\n~ students: List\<UniversityStudent\>\\n~ students: List\<UniversityStudent\>\\n~ score: int\\n~ graph: StudentGraph\\n... and 10 more\|+* main(args: String[]): void\\n~ for(testCases.size(: int i = 0; i \<):  \\n~ for(tc: UniversityStudent s :):  \\n+* generateTestCase1(): List\<UniversityStudent\>\\n+* generateTestCase2(): List\<UniversityStudent\>\\n+* generateTestCase3(): List\<UniversityStudent\>\\n+* gradeLab(students: List\<UniversityStudent\>, testCaseNumber: int): int\\n~ for(graph.getAllNodes(: UniversityStudent s :):  \\n... and 16 more\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "implementing" [label="\{implementing\|+ GaleShapley: class\|+* assignRoommates(students: List\<UniversityStudent\>): void\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "models" [label="\{models\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "representing" [label="\{representing\|# name: String\\n# age: int\\n# gender: String\\n# year: int\\n# major: String\\n# gpa: double\\n# roommatePreferences: List\<String\>\\n# previousInternships: List\<String\>\|+/ calculateConnectionStrength(other: Student): int\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+  "responsible" [label="\{responsible\|+ DataParser: class\|+* parseStudents(filename: String): List\<UniversityStudent\>\}", fillcolor="#FFFFE6", color="#FFFFCC", penwidth=2.5];
+
+  "builds" -> "ReferralPathFinder" [arrowhead=vee, arrowtail=odot, label=" has-a", color="#009900", penwidth=2.5, fontcolor="#009900"];
+  "builds" -> "StudentGraph" [arrowhead=vee, arrowtail=odot, label=" has-a", color="#009900", penwidth=2.5, fontcolor="#009900"];
+}

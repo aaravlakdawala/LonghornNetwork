@@ -1,0 +1,1 @@
+This UML diagram assumes that StudentGraph with a inside class called edge which has a weighted edge structure with a weighted conenction from one student to another (neighbors)

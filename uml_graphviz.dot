@@ -1,0 +1,20 @@
+digraph UML {
+  rankdir=TB;
+  node [shape=record, fontname="Arial", fontsize="10"];
+  edge [fontname="Arial", fontsize="9"];
+  graph [bgcolor=white];
+
+  "ChatThread" [label="{{ChatThread}|{Methods:\n+ run(): void}}", color="black", fontsize="11", fontname="Arial"];
+  "responsible" [label="{{responsible}|{Methods:\n~* parseStudents(filename: String): List\<UniversityStudent\>}}", color="black", fontsize="11", fontname="Arial"];
+  "FriendRequestThread" [label="{{FriendRequestThread}|{Methods:\n+ run(): void}}", color="black", fontsize="11", fontname="Arial"];
+  "implementing" [label="{{implementing}|{Methods:\n~* assignRoommates(students: List\<UniversityStudent\>): void}}", color="black", fontsize="11", fontname="Arial"];
+  "builds" [label="{{builds}|{~ overallScore: int\n~ count: int\n~ i: int\n~ tc: List\<UniversityStudent\>\n~ score: int\n~ preferences: roommate\n~ students: List\<UniversityStudent\>\n~ students: List\<UniversityStudent\>\n~ students: List\<UniversityStudent\>\n~ score: int\n~ graph: StudentGraph\n~ edges: List\<StudentGraph.Edge\>\n~ neighbor: UniversityStudent\n~ reciprocalFound: boolean\n~ none: be\n~ unpairedCount: int\n~ executor: ExecutorService\n~ s1: UniversityStudent\n~ s2: UniversityStudent\n~ graph: StudentGraph\n~ pathFinder: ReferralPathFinder\n~ path: List\<UniversityStudent\>}|{Methods:\n~* main(args: String[]): void\n~* generateTestCase1(): List\<UniversityStudent\>\n~* generateTestCase2(): List\<UniversityStudent\>\n~* generateTestCase3(): List\<UniversityStudent\>\n~* gradeLab(students: List\<UniversityStudent\>, testCaseNumber: int): int}}", color="black", fontsize="11", fontname="Arial"];
+  "PodFormation" [label="{{PodFormation}|{Methods:\n+ formPods(podSize: int): void}}", color="black", fontsize="11", fontname="Arial"];
+  "ReferralPathFinder" [label="{{ReferralPathFinder}|{Methods:\n+ findReferralPath(start: UniversityStudent, targetCompany: String): List\<UniversityStudent\>}}", color="black", fontsize="11", fontname="Arial"];
+  "representing" [label="{{representing}|{# name: String\n# age: int\n# gender: String\n# year: int\n# major: String\n# gpa: double\n# roommatePreferences: List\<String\>\n# previousInternships: List\<String\>}}", color="black", fontsize="11", fontname="Arial"];
+  "StudentGraph" [label="{{StudentGraph}|{+ neighbor: UniversityStudent\n+ weight: int}|{Methods:\n~ Edge(neighbor: UniversityStudent, weight: int): public\n+ getAllNodes(): List\<UniversityStudent\>\n+ getNeighbors(s: UniversityStudent): List\<Edge\>}}", color="black", fontsize="11", fontname="Arial"];
+  "models" [label="{{models}}", color="black", fontsize="11", fontname="Arial"];
+
+  "builds" -> "StudentGraph" [arrowhead=vee, label=" has-a (graph)", style=solid, color=darkgreen, penwidth=1.5];
+  "builds" -> "ReferralPathFinder" [arrowhead=vee, label=" has-a (pathFinder)", style=solid, color=darkgreen, penwidth=1.5];
+}

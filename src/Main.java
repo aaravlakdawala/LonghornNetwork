@@ -157,7 +157,7 @@ public class Main {
                     }
                 }
             }
-            graph.displayGraph();
+            // graph.displayGraph();
             score += 30;
             System.out.println("Test: StudentGraph passed (+30 pts).");
         } catch (Exception e) {

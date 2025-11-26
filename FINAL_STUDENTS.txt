@@ -1,0 +1,89 @@
+Student:
+Name: Simon
+Age: 20
+Gender: Female
+Year: 2
+Major: Computer Science
+GPA: 3.8
+RoommatePreferences: Whale, Issac
+PreviousInternships: Google, Amazon, CoolCompany
+
+Student:
+Name: Whale
+Age: 20
+Gender: Male
+Year: 3
+Major: Computer Science
+GPA: 3.5
+RoommatePreferences: Simon, Timmy
+PreviousInternships: Google, AmazingTech
+
+Student:
+Name: Timmy
+Age: 21
+Gender: Male
+Year: 3
+Major: ECE
+GPA: 3.5
+RoommatePreferences: Jimmy, Whale
+PreviousInternships: Microsoft, AmazingTech, CoolCompany
+
+Student:
+Name: Jimmy
+Age: 21
+Gender: Male
+Year: 3
+Major: ECE
+GPA: 3.5
+RoommatePreferences: Timmy
+PreviousInternships: Amazon, Microsoft, Logitech
+
+Student:
+Name: Issac
+Age: 20
+Gender: Male
+Year: 3
+Major: Computer Science
+GPA: 3.5
+RoommatePreferences: Simon
+PreviousInternships: Logitech, Amazon
+
+Student:
+Name: Aarav
+Age: 19
+Gender: Male
+Year: 2
+Major: ECE
+GPA: 3.9
+RoommatePreferences: Timmy
+PreviousInternships: Raytheon
+
+Student:
+Name: Sahil
+Age: 58
+Gender: Other
+Year: 2
+Major: ECE
+GPA: 4.0
+RoommatePreferences: Aarav, Ibrahim
+PreviousInternships: NVIDIA, Google
+
+Student:
+Name: Tejin
+Age: 44
+Gender: Male
+Year: 1
+Major: ECE
+GPA: 3.9
+RoommatePreferences: Aarav
+PreviousInternships: Raytheon
+
+Student:
+Name: Mary
+Age: 21
+Gender: Female
+Year: 3
+Major: CS
+GPA: 2.4
+RoommatePreferences: None
+PreviousInternships: None

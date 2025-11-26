@@ -1,0 +1,38 @@
+{
+  "students": [
+    {
+      "id": "student1",
+      "name": "Alice Johnson",
+      "gpa": 3.8,
+      "major": "Computer Science",
+      "description": "Sophomore CS major with focus on AI"
+    },
+    {
+      "id": "student2",
+      "name": "Bob Smith",
+      "gpa": 3.5,
+      "major": "Data Science",
+      "description": "Junior specializing in machine learning"
+    },
+    {
+      "id": "student3",
+      "name": "Carol White",
+      "gpa": 3.9,
+      "major": "Computer Science",
+      "description": "Senior CS major with research experience"
+    },
+    {
+      "id": "student4",
+      "name": "David Lee",
+      "gpa": 3.6,
+      "major": "Software Engineering",
+      "description": "Junior software engineer in training"
+    }
+  ],
+  "connections": [
+    { "source": "student1", "target": "student2", "weight": 0.8 },
+    { "source": "student1", "target": "student3", "weight": 0.9 },
+    { "source": "student2", "target": "student4", "weight": 0.7 },
+    { "source": "student3", "target": "student4", "weight": 0.6 }
+  ]
+}

@@ -1,242 +1,294 @@
-import java.util.*;
-import java.util.concurrent.*;
+import static spark.Spark.*;
+import com.google.gson.Gson;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 
-/**
- * Main entry point and automated test harness for the LonghornNetwork project.
- *
- * This class builds a number of built-in test cases, runs automated grading
- * checks (graph reciprocity, roommate assignment, threading behavior, and
- * referral path finding) and prints scores for each test case.
- */
 public class Main {
+
+    // Use Gson for converting Java objects to JSON
+    private static final Gson gson = new Gson();
+
     public static void main(String[] args) {
-        // Create a list of test cases.
-        List<List<UniversityStudent>> testCases = new ArrayList<>();
-        testCases.add(generateTestCase1());
-        testCases.add(generateTestCase2());
-        testCases.add(generateTestCase3());
 
-        int overallScore = 0;
-        int count = 0;
-        for (int i = 0; i < testCases.size(); i++) {
-            System.out.println("\n========================================");
-            System.out.println("=== Running Test Case " + (i + 1) + " ===");
-            System.out.println("========================================");
-            List<UniversityStudent> tc = testCases.get(i);
+        // 1. CONFIGURATION (Port & WebSocket - MUST BE FIRST)
+        port(8080); // Set the server port to 8080
 
-            System.out.println("\n--- Built-in Test Data for Test Case " + (i + 1) + " ---");
-            for (UniversityStudent s : tc) {
-                System.out.println(s);
+        // 2. WEBSOCKET SETUP (MUST be before any other routes/filters)
+        // This maps the WebSocketServer class to the path /websocketendpoint
+        webSocket("/websocketendpoint", WebSocketServer.class);
+
+        // 3. CORS (Cross-Origin Resource Sharing) Setup & Filters
+        // These are the first routes/filters, allowing Spark to start mapping
+        options("/*", (request, response) -> {
+            String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
+            if (accessControlRequestHeaders != null) {
+                response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
             }
+            String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
+            if (accessControlRequestMethod != null) {
+                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+            }
+            return "OK";
+        });
 
-            int score = gradeLab(tc, i + 1);
-            System.out.println("\nTest Case " + (i + 1) + " Final Score: " + score);
-            overallScore += score;
-            count++;
-        }
-        System.out.println("\n========================================");
-        System.out.println("Average Score across all test cases: " + (overallScore / count));
+        // Allow requests from the React frontend's origin (e.g., http://localhost:5173)
+        before((request, response) -> {
+            response.header("Access-Control-Allow-Origin", "http://localhost:5173");
+            response.header("Access-Control-Allow-Credentials", "true");
+        });
+
+        // 4. REST Endpoint Setup
+
+        // Health Check Endpoint: GET /health
+        get("/health", (req, res) -> {
+            res.type("application/json");
+            Map<String, String> response = new HashMap<>();
+            response.put("status", "UP");
+            response.put("application", "Spark/WebSocket Server");
+            return gson.toJson(response);
+        });
+
+        // Initial Graph Data Endpoint: GET /api/graph (NOW WITH TRY/CATCH)
+        get("/api/graph", (req, res) -> {
+            res.type("application/json");
+
+            try {
+                // Load data using the robust method
+                java.util.List<UniversityStudent> allStudents = loadStudents();
+
+                // Processing logic
+                GaleShapley.assignRoommates(allStudents);
+                StudentGraph sg = new StudentGraph(allStudents);
+
+                // Build JSON response
+                Map<String, Object> graphData = buildGraphResponse(sg);
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "success");
+                response.put("type", "initial-graph-data");
+                response.put("graph", graphData);
+
+                System.out.println("[Main] Responded to /api/graph with " + sg.getAllNodes().size() + " nodes.");
+                return gson.toJson(response);
+
+            } catch (Exception e) {
+                // Catch ANY exception that happens during the route processing
+                System.err.println("----------------------------------------------------------");
+                System.err.println("[Main] CRITICAL ERROR in /api/graph route! Stack Trace Below:");
+                e.printStackTrace();
+                System.err.println("----------------------------------------------------------");
+
+                // Return a proper JSON error response (HTTP 500)
+                res.status(500);
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("status", "error");
+                errorResponse.put("message",
+                        "Internal Server Error: Data processing failed. Check Java console for stack trace.");
+                return gson.toJson(errorResponse);
+            }
+        });
+
+        // Command Endpoint: POST /api/command (Used for Refresh)
+        post("/api/command", (req, res) -> {
+            res.type("application/json");
+
+            // Parse incoming command
+            Map commandData = gson.fromJson(req.body(), Map.class);
+            String command = commandData != null && commandData.get("command") != null
+                    ? commandData.get("command").toString()
+                    : "Unknown";
+
+            // Load data for the response
+            java.util.List<UniversityStudent> allStudents = loadStudents();
+            GaleShapley.assignRoommates(allStudents);
+            StudentGraph sg = new StudentGraph(allStudents);
+
+            // Build JSON response from the graph object
+            Map<String, Object> graphData = buildGraphResponse(sg);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Command received and processed: " + command);
+            response.put("command", command);
+            response.put("graph", graphData);
+
+            System.out.println("[Main] Received POST /api/command: " + command);
+            System.out.println("[Main] Responded with dynamic graph with " + sg.getAllNodes().size() + " nodes.");
+
+            return gson.toJson(response);
+        });
+
+        // Add Student Endpoint: POST /api/student
+        post("/api/student", (req, res) -> {
+            res.type("application/json");
+
+            try {
+                // Parse incoming student data
+                Map<String, Object> studentData = gson.fromJson(req.body(), Map.class);
+
+                // Extract fields
+                String name = (String) studentData.get("name");
+                double age = ((Number) studentData.get("age")).doubleValue();
+                String gender = (String) studentData.get("gender");
+                double year = ((Number) studentData.get("year")).doubleValue();
+                String major = (String) studentData.get("major");
+                double gpa = ((Number) studentData.get("gpa")).doubleValue();
+
+                java.util.List<String> roommatePreferences = (java.util.List<String>) studentData
+                        .get("roommatePreferences");
+                if (roommatePreferences == null)
+                    roommatePreferences = new java.util.ArrayList<>();
+
+                java.util.List<String> previousInternships = (java.util.List<String>) studentData
+                        .get("previousInternships");
+                if (previousInternships == null)
+                    previousInternships = new java.util.ArrayList<>();
+
+                // Create new student
+                UniversityStudent newStudent = new UniversityStudent(
+                        name,
+                        (int) age,
+                        gender,
+                        (int) year,
+                        major,
+                        gpa,
+                        roommatePreferences,
+                        previousInternships);
+
+                // Save to file
+                DataParser.appendStudentToFile(newStudent, "FINAL_STUDENTS.txt");
+
+                // Reload all students including the new one
+                java.util.List<UniversityStudent> allStudents = loadStudents();
+                GaleShapley.assignRoommates(allStudents);
+                StudentGraph sg = new StudentGraph(allStudents);
+
+                // Build JSON response
+                Map<String, Object> graphData = buildGraphResponse(sg);
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "success");
+                response.put("message", "Student " + name + " added successfully");
+                response.put("graph", graphData);
+
+                System.out.println("[Main] Added new student: " + name);
+                return gson.toJson(response);
+
+            } catch (Exception e) {
+                System.err.println("[Main] ERROR adding student: " + e.getMessage());
+                e.printStackTrace();
+
+                res.status(400);
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("status", "error");
+                errorResponse.put("message", "Failed to add student: " + e.getMessage());
+                return gson.toJson(errorResponse);
+            }
+        });
+
+        // DEBUG: Log before registering /api/referral-path
+        System.out.println("[Main] About to register /api/referral-path endpoint");
+
+        // Find Referral Path Endpoint: POST /api/referral-path
+        post("/api/referral-path", (req, res) -> {
+            res.type("application/json");
+            Map<String, String> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Referral path endpoint works");
+            return gson.toJson(response);
+        });
+
+        System.out.println("[Main] Registered /api/referral-path endpoint");
+
+        // 5. Start the Server
+        // Global exception handler: return JSON on unhandled exceptions (avoid HTML
+        // error pages)
+        exception(Exception.class, (e, req, res) -> {
+            res.type("application/json");
+            res.status(500);
+            java.util.Map<String, Object> error = new java.util.HashMap<>();
+            error.put("status", "error");
+            error.put("message", e.getClass().getName() + ": " + e.getMessage());
+            res.body(gson.toJson(error));
+            System.err.println("[Main] Unhandled exception caught by global handler:");
+            e.printStackTrace();
+        });
+
+        init();
+
+        System.out.println("\n\n**************************************************************");
+        System.out.println("✅ Java Spark Backend Running!");
+        System.out.println("   REST endpoints available on http://localhost:8080");
+        System.out.println("   WebSocket endpoint ready on ws://localhost:8080/websocketendpoint");
+        System.out.println("**************************************************************");
     }
 
-    /**
-     * Generate test case 1: two groups of students. The first group contains
-     * four students with mutual roommate preferences; the second group is a
-     * pair of students.
-     *
-     * @return a list of {@link UniversityStudent} objects representing the test
-     *         data
-     */
-    public static List<UniversityStudent> generateTestCase1() {
-        List<UniversityStudent> students = new ArrayList<>();
+    // --- UTILITY METHODS ---
 
-        // Group 1: 4 students with full mutual roommate preferences.
-        students.add(new UniversityStudent(
-                "Alice", 20, "Female", 2, "Computer Science", 3.5,
-                Arrays.asList("Bob", "Charlie", "Frank"), Arrays.asList("Google")));
-        students.add(new UniversityStudent(
-                "Bob", 21, "Male", 3, "Computer Science", 3.7,
-                Arrays.asList("Alice", "Charlie", "Frank"), Arrays.asList("Google", "Microsoft")));
-        students.add(new UniversityStudent(
-                "Charlie", 20, "Male", 2, "Mathematics", 3.2,
-                Arrays.asList("Alice", "Bob", "Frank"), Arrays.asList("None")));
-        students.add(new UniversityStudent(
-                "Frank", 23, "Male", 3, "Chemistry", 3.1,
-                Arrays.asList("Alice", "Bob", "Charlie"), Arrays.asList()));
+    private static Map<String, Object> buildGraphResponse(StudentGraph sg) {
+        java.util.List<java.util.Map<String, Object>> nodes = new java.util.ArrayList<>();
+        java.util.List<java.util.Map<String, Object>> links = new java.util.ArrayList<>();
 
-        // Group 2: 2 students
-        students.add(new UniversityStudent(
-                "Dana", 22, "Female", 4, "Biology", 3.8,
-                Arrays.asList("Evan"), Arrays.asList("Pfizer")));
-        students.add(new UniversityStudent(
-                "Evan", 22, "Male", 4, "Biology", 3.6,
-                Arrays.asList("Dana"), Arrays.asList("Moderna", "Pfizer")));
+        for (UniversityStudent s : sg.getAllNodes()) {
+            java.util.Map<String, Object> node = new java.util.HashMap<>();
+            String id = s.getName() == null ? "" : s.getName();
 
-        return students;
-    }
+            // Full student data in each node
+            node.put("id", id);
+            node.put("name", s.getName());
+            node.put("age", s.getAge());
+            node.put("gender", s.getGender());
+            node.put("year", s.getYear());
+            node.put("major", s.getMajor());
+            node.put("gpa", s.getGpa());
+            node.put("roommate", s.getRoommate() != null ? s.getRoommate().getName() : null);
+            node.put("roommatePreferences", s.getRoommatePreferences());
+            node.put("previousInternships", s.getPreviousInternships());
 
-    /**
-     * Generate test case 2: three students where one student has
-     * "DummyCompany" in the previous internships list. This is used to test
-     * referral path finding.
-     *
-     * @return a list of {@link UniversityStudent} objects representing the test
-     *         data
-     */
-    public static List<UniversityStudent> generateTestCase2() {
-        List<UniversityStudent> students = new ArrayList<>();
+            nodes.add(node);
 
-        students.add(new UniversityStudent(
-                "Greg", 24, "Male", 4, "Economics", 3.4,
-                Arrays.asList("Helen", "Ivy"), Arrays.asList("InternshipA")));
-        students.add(new UniversityStudent(
-                "Helen", 24, "Female", 4, "Economics", 3.5,
-                Arrays.asList("Greg", "Ivy"), Arrays.asList("InternshipB")));
-        students.add(new UniversityStudent(
-                "Ivy", 25, "Female", 4, "Economics", 3.8,
-                Arrays.asList("Helen", "Greg"), Arrays.asList("DummyCompany")));
-
-        return students;
-    }
-
-    /**
-     * Generate test case 3: three students where one student has no roommate
-     * preferences. Two of them should be pairable while one remains unpaired.
-     *
-     * @return a list of {@link UniversityStudent} objects representing the test
-     *         data
-     */
-    public static List<UniversityStudent> generateTestCase3() {
-        List<UniversityStudent> students = new ArrayList<>();
-
-        students.add(new UniversityStudent(
-                "Jack", 19, "Male", 1, "History", 3.0,
-                Arrays.asList("Kim"), Arrays.asList("MuseumIntern")));
-        students.add(new UniversityStudent(
-                "Kim", 19, "Female", 1, "History", 3.2,
-                Arrays.asList("Jack"), Arrays.asList("MuseumIntern")));
-        students.add(new UniversityStudent(
-                "Leo", 20, "Male", 1, "History", 3.5,
-                Collections.emptyList(), Arrays.asList("None")));
-
-        return students;
-    }
-
-    /**
-     * Run automated tests on a provided test case and return a numeric score.
-     *
-     * The grading executes a battery of checks (graph integrity, matching,
-     * multithreaded components, referral path finding) and prints diagnostic
-     * output to the console. The returned integer is the aggregated score.
-     *
-     * @param students       list of {@link UniversityStudent} instances to test
-     * @param testCaseNumber friendly index used for console output
-     * @return aggregated integer score for the test case
-     */
-    public static int gradeLab(List<UniversityStudent> students, int testCaseNumber) {
-        int score = 0;
-        System.out.println("\n--- Automated Tests for Test Case " + testCaseNumber + " ---");
-
-        // Test StudentGraph (30 pts)
-        try {
-            StudentGraph graph = new StudentGraph(students);
-            // Verify that each edge is reciprocal.
-            for (UniversityStudent s : graph.getAllNodes()) {
-                List<StudentGraph.Edge> edges = graph.getNeighbors(s);
-                for (StudentGraph.Edge edge : edges) {
-                    UniversityStudent neighbor = edge.neighbor;
-                    boolean reciprocalFound = false;
-                    for (StudentGraph.Edge reverseEdge : graph.getNeighbors(neighbor)) {
-                        if (reverseEdge.neighbor.equals(s) && reverseEdge.weight == edge.weight) {
-                            reciprocalFound = true;
-                            break;
-                        }
-                    }
-                    if (!reciprocalFound) {
-                        throw new Exception(
-                                "Graph edge from " + s.name + " to " + neighbor.name + " is not reciprocal.");
+            java.util.List<StudentGraph.Edge> edges = sg.getNeighbors(s);
+            if (edges != null) {
+                for (StudentGraph.Edge e : edges) {
+                    java.util.Map<String, Object> link = new java.util.HashMap<>();
+                    String target = e.neighbor == null ? "" : e.neighbor.getName();
+                    if (id.compareTo(target) < 0) {
+                        link.put("source", id);
+                        link.put("target", target);
+                        link.put("weight", e.weight);
+                        links.add(link);
                     }
                 }
             }
-            // graph.displayGraph();
-            score += 30;
-            System.out.println("Test: StudentGraph passed (+30 pts).");
-        } catch (Exception e) {
-            System.out.println("Test: StudentGraph failed: " + e.getMessage());
         }
 
-        // Test GaleShapley (20 pts)
-        try {
-            GaleShapley.assignRoommates(students);
-            // Count unpaired students. In an even-sized group, there should be none;
-            // in odd-sized groups, at most one can remain unpaired.
-            int unpairedCount = 0;
-            for (UniversityStudent s : students) {
-                if (!s.roommatePreferences.isEmpty()) {
-                    if (s.getRoommate() == null) {
-                        unpairedCount++;
-                    } else if (!s.getRoommate().getRoommate().equals(s)) {
-                        throw new Exception("Roommate pairing for " + s.name + " is not reciprocal.");
-                    }
+        java.util.Map<String, Object> graph = new java.util.HashMap<>();
+        graph.put("nodes", nodes);
+        graph.put("links", links);
+        return graph;
+    }
+
+    private static java.util.List<UniversityStudent> loadStudents() {
+        String[] candidates = new String[] { "FINAL_STUDENTS.txt", "src/FINAL_STUDENTS.txt",
+                "result/FINAL_STUDENTS.txt" };
+        for (String path : candidates) {
+            try {
+                // Assuming DataParser.parseStudents is a static method that handles file
+                // reading
+                java.util.List<UniversityStudent> list = DataParser.parseStudents(path);
+                if (list != null && !list.isEmpty()) {
+                    System.out.println("[Main] Loaded " + list.size() + " students from: " + path);
+                    return list;
+                } else {
+                    System.out.println("[Main] No students found or file empty at: " + path);
                 }
+            } catch (Exception e) {
+                // Note: We suppress stack trace here, but the main route try/catch will show it
+                // if it crashes.
+                System.out.println("[Main] Error reading " + path + ": " + e.getMessage());
             }
-            if (unpairedCount > 1) {
-                throw new Exception("Too many unpaired students: " + unpairedCount);
-            }
-            score += 20;
-            System.out.println("Test: GaleShapley passed (+20 pts).");
-        } catch (Exception e) {
-            System.out.println("Test: GaleShapley failed: " + e.getMessage());
         }
-
-        // Test FriendRequestThread and ChatThread with semaphores (20 pts)
-        try {
-            if (students.size() >= 2) {
-                ExecutorService executor = Executors.newFixedThreadPool(4);
-                UniversityStudent s1 = students.get(0);
-                UniversityStudent s2 = students.get(1);
-                // Submit multiple concurrent tasks.
-                executor.submit(new FriendRequestThread(s1, s2));
-                executor.submit(new ChatThread(s1, s2, "Hello there!"));
-                executor.submit(new FriendRequestThread(s2, s1));
-                executor.submit(new ChatThread(s2, s1, "Hi back!"));
-                executor.shutdown();
-                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                    throw new RuntimeException("Concurrency tasks did not finish in time.");
-                }
-                score += 20;
-                System.out.println("Test: FriendRequestThread/ChatThread passed (+20 pts).");
-            } else {
-                System.out.println("Not enough students to test threads (0 pts).");
-            }
-        } catch (Exception e) {
-            System.out.println("Test: FriendRequestThread/ChatThread failed: " + e.getMessage());
-        }
-
-        // Test ReferralPathFinder using PriorityQueue (10 pts)
-        try {
-            StudentGraph graph = new StudentGraph(students);
-            ReferralPathFinder pathFinder = new ReferralPathFinder(graph);
-            // For test case 2, we expect a non-empty referral path when searching for
-            // "DummyCompany".
-            // For test cases that don't have that internship, the returned path may be
-            // empty.
-            List<UniversityStudent> path = pathFinder.findReferralPath(students.get(0), "DummyCompany");
-            System.out.println("ReferralPathFinder returned path: " + path);
-            if (testCaseNumber == 2 && path.isEmpty()) {
-                throw new Exception("Expected a referral path, but none was found.");
-            }
-            score += 10;
-            System.out.println("Test: ReferralPathFinder passed (+10 pts).");
-        } catch (Exception e) {
-            System.out.println("Test: ReferralPathFinder failed: " + e.getMessage());
-        }
-
-        // Extra integration points (20 pts)
-        score += 20;
-        System.out.println("Test: Integration passed (+20 pts).");
-
-        System.out.println("\nTotal Score for Test Case " + testCaseNumber + ": " + score);
-        return score;
+        System.out.println("[Main] Could not find any student file. Returning empty list.");
+        return new java.util.ArrayList<>();
     }
 }

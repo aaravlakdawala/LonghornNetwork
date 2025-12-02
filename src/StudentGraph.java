@@ -45,6 +45,14 @@ public class StudentGraph {
      */
     public StudentGraph(List<UniversityStudent> students) {
         // stub
+        // First, initialize all students as nodes
+        for (UniversityStudent s : students) {
+            if (!ajacentList.containsKey(s)) {
+                ajacentList.put(s, new ArrayList<>());
+            }
+        }
+
+        // Second, add edges from roommate preferences
         for (UniversityStudent newStudent : students) {
             List<Edge> currentList = ajacentList.get(newStudent);
             if (currentList == null) {
@@ -52,13 +60,37 @@ public class StudentGraph {
             }
             for (String name : newStudent.roommatePreferences) {
                 UniversityStudent otherStudent = nameToStudent(name, students);
+                // If nameToStudent couldn't find a matching student, skip this preference
+                if (otherStudent == null) {
+                    continue;
+                }
+                // Defensive: ensure otherStudent is not null before calculating strength
                 int weight = newStudent.calculateConnectionStrength(otherStudent);
                 weight = 10 - weight;
                 Edge newEdge = new Edge(otherStudent, weight);
                 currentList.add(newEdge);
             }
             ajacentList.put(newStudent, currentList);
+        }
 
+        // Third, add edges for actual roommate assignments (post-matching)
+        for (UniversityStudent s : students) {
+            UniversityStudent roommate = s.getRoommate();
+            if (roommate != null) {
+                // Check if edge from s to roommate already exists
+                List<Edge> edges = ajacentList.get(s);
+                boolean edgeExists = false;
+                for (Edge e : edges) {
+                    if (e.neighbor.equals(roommate)) {
+                        edgeExists = true;
+                        break;
+                    }
+                }
+                // If no edge exists, add one with weight 0 (roommate edge)
+                if (!edgeExists) {
+                    edges.add(new Edge(roommate, 0));
+                }
+            }
         }
     }
 

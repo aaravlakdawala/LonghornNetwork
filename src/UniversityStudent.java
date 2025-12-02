@@ -14,6 +14,7 @@ import java.util.Collections;
 public class UniversityStudent extends Student {
     private List<UniversityStudent> friendsList = Collections.synchronizedList(new ArrayList<>());
     private List<String> chatHistory = Collections.synchronizedList(new ArrayList<>());
+    private List<String> pendingFriendRequests = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Construct a UniversityStudent with the basic fields.
@@ -56,6 +57,13 @@ public class UniversityStudent extends Student {
     }
 
     /**
+     * Get the thread-safe pending friend requests (names of senders).
+     */
+    public List<String> getPendingFriendRequests() {
+        return pendingFriendRequests;
+    }
+
+    /**
      * Get the thread-safe chat history for this student.
      */
     public List<String> getChatHistory() {
@@ -68,23 +76,36 @@ public class UniversityStudent extends Student {
      */
     @Override
     public int calculateConnectionStrength(Student other) {// Save for later
+        if (other == null) {
+            return 0;
+        }
+
         int score = 0;
-        Set<String> sharedPreferences = new HashSet<>(this.previousInternships);
-        for (String pref : other.previousInternships) {
-            if (sharedPreferences.contains(pref)) {
+        // defensive copies / null checks for internships
+        List<String> myInterns = this.previousInternships == null ? new ArrayList<>() : this.previousInternships;
+        List<String> otherInterns = other.previousInternships == null ? new ArrayList<>() : other.previousInternships;
+
+        Set<String> sharedPreferences = new HashSet<>(myInterns);
+        for (String pref : otherInterns) {
+            if (pref != null && sharedPreferences.contains(pref)) {
                 score += 3;
                 break;
             }
         }
-        if (this.roommate != null && this.roommate.name.equals(other.name)) {
+
+        if (this.roommate != null && other.name != null && this.roommate.name != null
+                && this.roommate.name.equals(other.name)) {
             score += 4;
         }
-        if (this.major.equals(other.major)) {
+
+        if (this.major != null && other.major != null && this.major.equals(other.major)) {
             score += 2;
         }
+
         if (this.age == other.age) {
             score += 1;
         }
+
         return score;
     }
 }

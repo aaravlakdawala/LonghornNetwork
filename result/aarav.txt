@@ -1,0 +1,83 @@
+$ java ./TestReal.java // not main because React needed the main to be one of the backedn servers
+
+========================================
+=== Running Test Case 1 ===
+========================================
+
+--- Built-in Test Data for Test Case 1 ---
+UniversityStudent@5488b5c5
+UniversityStudent@4248ed58
+UniversityStudent@712ca57b
+UniversityStudent@4564e94b
+UniversityStudent@54534abf
+UniversityStudent@51745f40
+
+--- Automated Tests for Test Case 1 ---
+Test: StudentGraph passed (+30 pts).
+Test: GaleShapley passed (+20 pts).
+[pool-1-thread-3] Bob sent a friend request to Alice
+[pool-1-thread-1] Alice sent a friend request to Bob
+[pool-1-thread-2] Alice -> Bob: Hello there!
+[pool-1-thread-4] Bob -> Alice: Hi back!
+Test: FriendRequestThread/ChatThread passed (+20 pts).
+ReferralPathFinder returned path: []
+Test: ReferralPathFinder passed (+10 pts).
+Test: Integration passed (+20 pts).
+
+Total Score for Test Case 1: 100
+
+Test Case 1 Final Score: 100
+
+========================================
+=== Running Test Case 2 ===
+========================================
+
+--- Built-in Test Data for Test Case 2 ---
+UniversityStudent@4a9860
+UniversityStudent@7ca16adc
+UniversityStudent@5ae1c281
+
+--- Automated Tests for Test Case 2 ---
+Test: StudentGraph passed (+30 pts).
+Test: GaleShapley passed (+20 pts).
+[pool-2-thread-1] Greg sent a friend request to Helen
+[pool-2-thread-3] Helen sent a friend request to Greg
+[pool-2-thread-2] Greg -> Helen: Hello there!
+[pool-2-thread-4] Helen -> Greg: Hi back!
+Test: FriendRequestThread/ChatThread passed (+20 pts).
+ReferralPathFinder returned path: [UniversityStudent@4a9860, UniversityStudent@5ae1c281]
+Test: ReferralPathFinder passed (+10 pts).
+Test: Integration passed (+20 pts).
+
+Total Score for Test Case 2: 100
+
+Test Case 2 Final Score: 100
+
+========================================
+=== Running Test Case 3 ===
+========================================
+
+--- Built-in Test Data for Test Case 3 ---
+UniversityStudent@1039bfc4
+UniversityStudent@7f85217c
+UniversityStudent@1fd7a37
+
+--- Automated Tests for Test Case 3 ---
+Test: StudentGraph passed (+30 pts).
+Test: GaleShapley passed (+20 pts).
+[pool-3-thread-1] Jack sent a friend request to Kim
+[pool-3-thread-3] Kim sent a friend request to Jack
+[pool-3-thread-2] Jack -> Kim: Hello there!
+[pool-3-thread-4] Kim -> Jack: Hi back!
+Test: FriendRequestThread/ChatThread passed (+20 pts).
+ReferralPathFinder returned path: []
+Test: ReferralPathFinder passed (+10 pts).
+Test: Integration passed (+20 pts).
+
+Total Score for Test Case 3: 100
+
+Test Case 3 Final Score: 100
+
+========================================
+Average Score across all test cases: 100
+(base) 

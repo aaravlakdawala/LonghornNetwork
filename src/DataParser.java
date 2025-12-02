@@ -77,6 +77,15 @@ public class DataParser {
                 }
             }
             reader.close();
+            // If file didn't end with an empty separator line, ensure the
+            // last student is added to the list when it has a name.
+            try {
+                if (student != null && student.getName() != null && !student.getName().trim().isEmpty()) {
+                    allStudents.add(student);
+                }
+            } catch (Exception e) {
+                // ignore
+            }
         } catch (IOException e) {
             // throw new IOException("Error");
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -88,5 +97,41 @@ public class DataParser {
         }
 
         return allStudents;
+    }
+
+    /**
+     * Append a new student to the student data file.
+     *
+     * @param student  the student to append
+     * @param filename path to the output file
+     * @throws IOException if the file cannot be written
+     */
+    public static void appendStudentToFile(UniversityStudent student, String filename) throws IOException {
+        try (FileWriter writer = new FileWriter(filename, true)) {
+            writer.write("\n");
+            writer.write("Student:\n");
+            writer.write("Name: " + student.getName() + "\n");
+            writer.write("Age: " + student.getAge() + "\n");
+            writer.write("Gender: " + student.getGender() + "\n");
+            writer.write("Year: " + student.getYear() + "\n");
+            writer.write("Major: " + student.getMajor() + "\n");
+            writer.write("GPA: " + student.getGpa() + "\n");
+
+            // Roommate preferences
+            List<String> prefs = student.getRoommatePreferences();
+            if (prefs == null || prefs.isEmpty()) {
+                writer.write("RoommatePreferences: None\n");
+            } else {
+                writer.write("RoommatePreferences: " + String.join(", ", prefs) + "\n");
+            }
+
+            // Previous internships
+            List<String> internships = student.getPreviousInternships();
+            if (internships == null || internships.isEmpty()) {
+                writer.write("PreviousInternships: None\n");
+            } else {
+                writer.write("PreviousInternships: " + String.join(", ", internships) + "\n");
+            }
+        }
     }
 }

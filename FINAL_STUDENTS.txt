@@ -87,3 +87,23 @@ Major: CS
 GPA: 2.4
 RoommatePreferences: None
 PreviousInternships: None
+
+Student:
+Name: Brad
+Age: 24
+Gender: Male
+Year: 4
+Major: CS
+GPA: 3.9
+RoommatePreferences: Aarav, Mary
+PreviousInternships: Google, IBM
+
+Student:
+Name: Joe
+Age: 21
+Gender: Male
+Year: 1
+Major: Buisness
+GPA: 2.5
+RoommatePreferences: None
+PreviousInternships: IBM

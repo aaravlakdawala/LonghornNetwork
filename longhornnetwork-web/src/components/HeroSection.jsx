@@ -35,9 +35,9 @@ export const HeroSection = () => {
             <div style={{ maxWidth: '1000px', width: '100%' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fff', margin: 0 }}>
-                        <span style={{ display: 'block' }}>Hi I'm</span>
-                        <span className="cyan-fade" style={{ display: 'block' }}>Aarav</span>
-                        <span style={{ display: 'block' }}>Lakdawala</span>
+                        <span style={{ display: 'block' }}>Welcome to the</span>
+                        <span className="cyan-fade" style={{ display: 'block' }}>Longhorn Network</span>
+                        <span style={{ display: 'block' }}>By Aarav Lakdawala</span>
                     </h1>
                 </div>
             </div>

@@ -10,6 +10,9 @@ import { HeroSection } from './components/HeroSection.jsx';
 import Executor from './Executor.jsx';
 import ExecutorGraph from './components/ExecutorGraph.jsx';
 import AddStudentForm from './components/AddStudentForm.jsx';
+import Testcases from './components/Testcases.jsx';
+import Search from './components/Search.jsx';
+import Signin from './components/Signin.jsx';
 
 // ==========================================================
 // Main App Component (Logic)
@@ -17,6 +20,7 @@ import AddStudentForm from './components/AddStudentForm.jsx';
 export default function App() {
     const [activeTab, setActiveTab] = useState('home');
     const [executorData, setExecutorData] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
 
     // Fetch graph data automatically on component mount
     useEffect(() => {
@@ -52,12 +56,21 @@ export default function App() {
             <StarBackground />
             <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
             {activeTab === 'home' && <HeroSection />}
-            {activeTab === 'graph' && <ExecutorGraph executorData={executorData} />}
+            {activeTab === 'graph' && <ExecutorGraph executorData={executorData} currentUser={currentUser} onUpdateGraph={setExecutorData} />}
+            {activeTab === 'search' && <Search executorData={executorData} />}
+            {activeTab === 'testcases' && <Testcases />}
+            {activeTab === 'signin' && (
+                <div style={{ marginTop: '80px' }}>
+                    <Signin onSignIn={(name) => { setCurrentUser(name); setActiveTab('graph'); }} />
+                </div>
+            )}
+            {/* Executor tab temporarily hidden. Keep rendering code commented out for now.
             {activeTab === 'executor' && (
                 <div style={{ marginTop: '80px' }}>
                     <Executor onDataReceived={setExecutorData} />
                 </div>
             )}
+            */}
             {activeTab === 'addstudent' && (
                 <AddStudentForm onStudentAdded={handleStudentAdded} />
             )}

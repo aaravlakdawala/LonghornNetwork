@@ -14,8 +14,8 @@ export const StarBackground = () => {
                 size: Math.random() * 2 + 1,
                 x: Math.random() * 100,
                 y: Math.random() * 30,
-                duration: Math.random() * 3 + 2, // Random duration 2-5s
-                delay: Math.random() * 2, // Random start delay 0-2s
+                duration: Math.random() * 2 + 2, // Random duration 2-4s
+                delay: 0, // No random delay to keep timing predictable
             };
             setMetors((prev) => [...prev, newMeror]);
             
@@ -30,7 +30,7 @@ export const StarBackground = () => {
         // Create meteors at random intervals
         const createNextMeteor = () => {
             createMeteor();
-            const nextInterval = Math.random() * 2000 + 500; // Next meteor in 0.5-2.5s
+            const nextInterval = Math.random() * 2000 + 4000; // Next meteor in 4-6s (ensures only one visible)
             setTimeout(createNextMeteor, nextInterval);
         };
         

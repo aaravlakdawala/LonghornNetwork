@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 const navItems = [
     { name: "Home", id: "home" },
     { name: "Graph", id: "graph" },
-    { name: "Executor", id: "executor" },
+    { name: "Testcases", id: "testcases" },
+    // Executor tab temporarily hidden per request; keep entry commented out
+    // { name: "Executor", id: "executor" },
     { name: "Search", id: "search" },
-    { name: "Sign Up/In", id: "signup" },
-    { name: "Add Student", id: "addstudent" }
+    { name: "Sign In", id: "signin" },
+    { name: "Sign Up", id: "addstudent" }
 ];
 
 export const Navbar = ({ activeTab, onTabChange }) => {

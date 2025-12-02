@@ -14,6 +14,7 @@ import java.util.Collections;
 public class UniversityStudent extends Student {
     private List<UniversityStudent> friendsList = Collections.synchronizedList(new ArrayList<>());
     private List<String> chatHistory = Collections.synchronizedList(new ArrayList<>());
+    private List<String> pendingFriendRequests = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Construct a UniversityStudent with the basic fields.
@@ -53,6 +54,13 @@ public class UniversityStudent extends Student {
      */
     public List<UniversityStudent> getFriendsList() {
         return friendsList;
+    }
+
+    /**
+     * Get the thread-safe pending friend requests (names of senders).
+     */
+    public List<String> getPendingFriendRequests() {
+        return pendingFriendRequests;
     }
 
     /**

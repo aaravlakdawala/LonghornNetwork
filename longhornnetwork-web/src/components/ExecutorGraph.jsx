@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import GraphNode from './GraphNode.jsx';
 import GraphLink from './GraphLink.jsx';
 
@@ -81,8 +81,18 @@ function generateNodePositions(nodeCount) {
 // ==========================================================
 // ExecutorGraph Component
 // ==========================================================
-function ExecutorGraph({ executorData }) {
+function ExecutorGraph({ executorData, currentUser, onUpdateGraph }) {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [highlightedEdges, setHighlightedEdges] = useState([]);
+  const [referralStart, setReferralStart] = useState('');
+  const [referralCompany, setReferralCompany] = useState('');
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [referralError, setReferralError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [sendingFriend, setSendingFriend] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [recipient, setRecipient] = useState('');
   const WIDTH = typeof window !== 'undefined' ? window.innerWidth * 0.8 : 1200;
   const HEIGHT = typeof window !== 'undefined' ? window.innerHeight * 0.7 : 800;
 
@@ -132,6 +142,38 @@ function ExecutorGraph({ executorData }) {
     setSelectedNodeId(nodeId);
   }
 
+  function isEdgeHighlighted(a, b) {
+    if (!highlightedEdges || highlightedEdges.length === 0) return false;
+    return highlightedEdges.some(e => (e.source === a && e.target === b) || (e.source === b && e.target === a));
+  }
+
+  async function findReferralPath() {
+    setReferralError(null);
+    if (!referralStart || !referralCompany) {
+      setReferralError('Select a student and enter a company');
+      return;
+    }
+    try {
+      setReferralLoading(true);
+      const res = await fetch('http://localhost:8080/api/referral-path', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student: referralStart, company: referralCompany })
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        setReferralError(body.message || 'Referral path search failed');
+        setHighlightedEdges([]);
+      } else {
+        setHighlightedEdges(body.edges || []);
+      }
+    } catch (e) {
+      setReferralError(e.message);
+      setHighlightedEdges([]);
+    } finally {
+      setReferralLoading(false);
+    }
+  }
   // Helper function to check if an edge is highlighted
   // No highlighted edges UI now — function removed.
 
@@ -140,6 +182,13 @@ function ExecutorGraph({ executorData }) {
   const studentNames = useMemo(() => {
     return graphData.nodes.map(node => node.name || node.label);
   }, [graphData.nodes]);
+
+  // Ensure recipient defaults to first non-current student
+  useEffect(() => {
+    if (!recipient && studentNames && studentNames.length > 0) {
+      setRecipient(studentNames[0]);
+    }
+  }, [studentNames]);
 
   if (!executorData || !executorData.graph || graphData.nodes.length === 0) {
     return (
@@ -151,12 +200,23 @@ function ExecutorGraph({ executorData }) {
         color: '#999',
         textAlign: 'center'
       }}>
-        <p>Waiting for executor data... Click "Request Graph" in the Executor tab to load student graph.</p>
+        <p>Please refresh the page to see new updates.</p>
       </div>
     );
   }
 
   const selectedNode = selectedNodeId ? nodeMap[selectedNodeId] : null;
+  const loggedIn = currentUser || null;
+
+  // Auto-select the signed-in user's node when signing in
+  useEffect(() => {
+    if (!currentUser || !graphData.nodes) return;
+    // Find a node whose name or id matches the currentUser string
+    const match = graphData.nodes.find(n => (n.name && n.name.toLowerCase() === currentUser.toLowerCase()) || (n.id && n.id.toLowerCase() === currentUser.toLowerCase()));
+    if (match) {
+      setSelectedNodeId(match.id);
+    }
+  }, [currentUser, graphData.nodes]);
 
   return (
     <div style={{
@@ -174,7 +234,7 @@ function ExecutorGraph({ executorData }) {
         {/* Graph SVG */}
         <div style={{ flex: 1 }}>
           <h3 style={{ marginTop: 0, color: '#333' }}>📊 Student Graph Visualization</h3>
-          <div className="bg-gray-800 rounded-xl shadow-2xl p-4" style={{ width: '100%' }}>
+              <div className="bg-gray-800 rounded-xl shadow-2xl p-4" style={{ width: '100%' }}>
             <svg
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
               xmlns="http://www.w3.org/2000/svg"
@@ -193,7 +253,7 @@ function ExecutorGraph({ executorData }) {
                         sourceNode={sourceNode}
                         targetNode={targetNode}
                         weight={link.weight}
-                        isHighlighted={false}
+                        isHighlighted={isEdgeHighlighted(link.source, link.target)}
                         allNodes={graphData.nodes}
                       />
                     );
@@ -235,6 +295,75 @@ function ExecutorGraph({ executorData }) {
           <h3 style={{ marginTop: 0, marginBottom: '15px', borderBottom: '2px solid #06b6d4', paddingBottom: '10px', color: '#000' }}>
             👤 Student Profile
           </h3>
+          {/* Referral Path UI */}
+          <div style={{ marginBottom: '12px', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '6px', background: '#fff' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '12px' }}>🔗 Find Referral Path</h4>
+            <select value={referralStart} onChange={e => setReferralStart(e.target.value)} style={{ width: '100%', padding: '6px', marginBottom: '8px' }}>
+              <option value="">-- Select Student --</option>
+              {studentNames.map((n, i) => <option key={i} value={n}>{n}</option>)}
+            </select>
+            <input placeholder="Target company (e.g., Google)" value={referralCompany} onChange={e => setReferralCompany(e.target.value)} style={{ width: '100%', padding: '6px', marginBottom: '8px' }} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={findReferralPath} style={{ flex: 1, padding: '8px', background: '#06b6d4', color: '#fff', border: 'none', borderRadius: '4px' }}>{referralLoading ? 'Searching...' : 'Find Path'}</button>
+              <button onClick={() => { setHighlightedEdges([]); setReferralError(null); setReferralCompany(''); setReferralStart(''); }} style={{ padding: '8px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px' }}>Clear</button>
+            </div>
+            {referralError && <div style={{ color: 'red', marginTop: '8px' }}>{referralError}</div>}
+          </div>
+          {/* Quick Send Controls (recipient dropdown) */}
+          <div style={{ marginBottom: '12px', padding: '8px', border: '1px dashed #e5e7eb', borderRadius: '6px', background: '#fff' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '12px' }}>✉️ Quick Send</h4>
+            <select value={recipient} onChange={e => setRecipient(e.target.value)} style={{ width: '100%', padding: '6px', marginBottom: '8px' }}>
+              {studentNames.map((n, i) => <option key={i} value={n}>{n}</option>)}
+            </select>
+            <input placeholder="Type a short message" value={messageText} onChange={e => setMessageText(e.target.value)} style={{ width: '100%', padding: '6px', marginBottom: '8px' }} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={async () => {
+                setActionError(null);
+                setSendingFriend(true);
+                try {
+                  const token = localStorage.getItem('authToken');
+                  if (!token) throw new Error('Not authenticated. Please sign in.');
+                  if (!recipient) throw new Error('Select a recipient');
+                  const res = await fetch('http://localhost:8080/api/friend-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ to: recipient })
+                  });
+                  const contentType = (res.headers.get('content-type') || '').toLowerCase();
+                  let body = null;
+                  if (contentType.includes('application/json')) body = await res.json(); else { const text = await res.text(); throw new Error('Server returned non-JSON: ' + text.slice(0,400)); }
+                  if (!res.ok) throw new Error((body && body.message) ? body.message : 'Friend request failed');
+                  if (body && body.graph && onUpdateGraph) onUpdateGraph({ graph: body.graph });
+                } catch (e) {
+                  setActionError(e.message || String(e));
+                } finally { setSendingFriend(false); }
+              }} disabled={sendingFriend} style={{ padding: '8px', background: '#06b6d4', color: '#fff', border: 'none', borderRadius: '4px' }}>{sendingFriend ? 'Sending...' : 'Send Friend Request'}</button>
+              <button onClick={async () => {
+                setActionError(null);
+                setSendingMessage(true);
+                try {
+                  const token = localStorage.getItem('authToken');
+                  if (!token) throw new Error('Not authenticated. Please sign in.');
+                  if (!recipient) throw new Error('Select a recipient');
+                  if (!messageText || messageText.trim().length === 0) throw new Error('Enter a message');
+                  const res = await fetch('http://localhost:8080/api/message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ to: recipient, text: messageText })
+                  });
+                  const contentType = (res.headers.get('content-type') || '').toLowerCase();
+                  let body = null;
+                  if (contentType.includes('application/json')) body = await res.json(); else { const text = await res.text(); throw new Error('Server returned non-JSON: ' + text.slice(0,400)); }
+                  if (!res.ok) throw new Error((body && body.message) ? body.message : 'Message send failed');
+                  if (body && body.graph && onUpdateGraph) onUpdateGraph({ graph: body.graph });
+                  setMessageText('');
+                } catch (e) {
+                  setActionError(e.message || String(e));
+                } finally { setSendingMessage(false); }
+              }} disabled={sendingMessage} style={{ padding: '8px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px' }}>{sendingMessage ? 'Sending...' : 'Send Message'}</button>
+            </div>
+            {actionError && <div style={{ color: 'red', marginTop: '8px' }}>{actionError}</div>}
+          </div>
           {selectedNode ? (
             <div style={{ color: '#000' }}>
               {/* Name Header */}
@@ -281,6 +410,102 @@ function ExecutorGraph({ executorData }) {
                   </ul>
                 </div>
               )}
+
+              {/* Friends (Friend Requests) */}
+              <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '3px', marginBottom: '10px', border: '1px solid #eee', color: '#000' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#000', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🤝 Friends / Friend Requests</h4>
+                {selectedNode.friends && selectedNode.friends.length > 0 ? (
+                  <ul style={{ margin: 0, paddingLeft: '18px', color: '#000' }}>
+                    {selectedNode.friends.map((f, idx) => (
+                      <li key={idx} style={{ fontSize: '12px', margin: '3px 0' }}>{f}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div style={{ fontStyle: 'italic', color: '#555' }}>None</div>
+                )}
+                <div style={{ marginTop: '8px' }}>
+                  <button
+                    onClick={async () => {
+                      setActionError(null);
+                      setSendingFriend(true);
+                      try {
+                        const token = localStorage.getItem('authToken');
+                        if (!token) throw new Error('Not authenticated. Please sign in.');
+                        const res = await fetch('http://localhost:8080/api/friend-request', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                          body: JSON.stringify({ to: selectedNode.name })
+                        });
+                        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+                        let body = null;
+                        if (contentType.includes('application/json')) {
+                          body = await res.json();
+                        } else {
+                          const text = await res.text();
+                          throw new Error('Server returned non-JSON response: ' + text.slice(0, 400));
+                        }
+                        if (!res.ok) throw new Error((body && body.message) ? body.message : 'Friend request failed');
+                        // Update parent graph with returned graph if available
+                        if (body && body.graph && onUpdateGraph) onUpdateGraph({ graph: body.graph });
+                      } catch (e) {
+                        setActionError(e.message || String(e));
+                      } finally {
+                        setSendingFriend(false);
+                      }
+                    }}
+                    disabled={sendingFriend}
+                    style={{ marginTop: '8px', padding: '6px 10px', background: '#06b6d4', color: '#fff', border: 'none', borderRadius: '4px' }}
+                  >{sendingFriend ? 'Sending...' : 'Send Friend Request'}</button>
+                </div>
+
+                {/* Pending requests: visible only when viewing your own profile */}
+                {selectedNode.pendingFriendRequests && selectedNode.pendingFriendRequests.length > 0 && selectedNode.name && loggedIn && selectedNode.name.toLowerCase() === loggedIn.toLowerCase() && (
+                  <div style={{ marginTop: '10px' }}>
+                    <h5 style={{ margin: '6px 0', fontSize: '12px' }}>Pending Friend Requests</h5>
+                    <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                      {selectedNode.pendingFriendRequests.map((p, idx) => (
+                        <li key={idx} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ flex: 1 }}>{p}</span>
+                          <button onClick={async () => {
+                            setActionError(null);
+                            try {
+                              const token = localStorage.getItem('authToken');
+                              if (!token) throw new Error('Not authenticated. Please sign in.');
+                              const res = await fetch('http://localhost:8080/api/friend-request/accept', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                                body: JSON.stringify({ from: p })
+                              });
+                              const contentType = (res.headers.get('content-type') || '').toLowerCase();
+                              let body = null;
+                              if (contentType.includes('application/json')) body = await res.json(); else { const text = await res.text(); throw new Error('Server returned non-JSON: ' + text.slice(0,400)); }
+                              if (!res.ok) throw new Error((body && body.message) ? body.message : 'Accept failed');
+                              if (body && body.graph && onUpdateGraph) onUpdateGraph({ graph: body.graph });
+                            } catch (e) {
+                              setActionError(e.message || String(e));
+                            }
+                          }} style={{ padding: '6px 10px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '4px' }}>Accept</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat History */}
+              <div style={{ backgroundColor: '#fff', padding: '10px', borderRadius: '3px', marginBottom: '10px', border: '1px solid #eee', color: '#000' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#000', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>💬 Chat History</h4>
+                {selectedNode.chatHistory && selectedNode.chatHistory.length > 0 ? (
+                  <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                    {selectedNode.chatHistory.map((m, idx) => (
+                      <div key={idx} style={{ fontSize: '12px', marginBottom: '6px', color: '#111' }}>{m}</div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontStyle: 'italic', color: '#555' }}>None</div>
+                )}
+                {actionError && <div style={{ color: 'red', marginTop: '8px' }}>{actionError}</div>}
+              </div>
 
               {/* Previous Internships */}
               {selectedNode.previousInternships && selectedNode.previousInternships.length > 0 && (

@@ -14,6 +14,58 @@ If you don't have package managers on Windows, consider installing Chocolatey (h
 
 Paths and versions are controlled externally — this repo's `pom.xml` targets Java 17.
 
+Install using package managers (terminal commands)
+
+The commands below install the minimal required tools: Java (OpenJDK 17), Maven, Git, Node.js (and npm). Pick the section for your OS.
+
+- Windows (Chocolatey) — open an Administrator PowerShell and run:
+
+```powershell
+choco install -y git openjdk17 maven nodejs-lts
+```
+
+- Windows (Scoop) — install Scoop first, then run in PowerShell (not as Admin):
+
+```powershell
+iwr -useb get.scoop.sh | iex
+scoop install git openjdk17 maven nodejs
+```
+
+- WSL / Debian & Ubuntu (apt) — Node via NodeSource to get a current Node version:
+
+```bash
+sudo apt update
+sudo apt install -y git maven openjdk-17-jdk curl
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+- Red Hat / CentOS / Fedora (dnf/yum):
+
+```bash
+sudo dnf install -y git maven java-17-openjdk-devel curl
+curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
+sudo dnf install -y nodejs
+```
+
+- macOS (Homebrew):
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"  # if brew missing
+brew update
+brew install git openjdk@17 maven node
+```
+
+Verification (run after install):
+
+```bash
+git --version
+mvn -v
+java -version
+node -v
+npm -v
+```
+
 Files added to help automation:
 
 - `ONE_SHOT_SETUP.sh` — POSIX bash script to check prerequisites, run `mvn clean package -DskipTests`, and run `npm ci` in `longhornnetwork-web`.
@@ -39,7 +91,7 @@ cd LonghornNetwork
 - On Windows PowerShell (run as Administrator if installing system packages):
 
 ```powershell
-.\ONE_SHOT_SETUP.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\ONE_SHOT_SETUP.ps1
 # or start in dev mode (installs, then launches frontend dev server):
 .\ONE_SHOT_SETUP.ps1 -Dev
 ```

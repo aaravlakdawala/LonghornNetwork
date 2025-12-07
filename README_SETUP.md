@@ -10,7 +10,7 @@ This file explains how to get a fresh machine from zero to a working LonghornNet
 - **npm** — bundled with Node, used to install frontend packages.
 - **git** — to clone the repo (optional if code already present).
 
-If you don't have package managers on Windows, consider installing Chocolatey (https://chocolatey.org) or Scoop (https://scoop.sh) and use them to install Java, Maven, Node, and Git.
+If you don't have package managers on Windows, install Chocolatey (https://chocolatey.org). Make sure after this is install RESTART your computer
 
 Paths and versions are controlled externally — this repo's `pom.xml` targets Java 17.
 
@@ -24,39 +24,7 @@ The commands below install the minimal required tools: Java (OpenJDK 17), Maven,
 choco install -y git openjdk17 maven nodejs-lts
 ```
 
-- Windows (Scoop) — install Scoop first, then run in PowerShell (not as Admin):
-
-```powershell
-iwr -useb get.scoop.sh | iex
-scoop install git openjdk17 maven nodejs
-```
-
-- WSL / Debian & Ubuntu (apt) — Node via NodeSource to get a current Node version:
-
-```bash
-sudo apt update
-sudo apt install -y git maven openjdk-17-jdk curl
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
-```
-
-- Red Hat / CentOS / Fedora (dnf/yum):
-
-```bash
-sudo dnf install -y git maven java-17-openjdk-devel curl
-curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-sudo dnf install -y nodejs
-```
-
-- macOS (Homebrew):
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"  # if brew missing
-brew update
-brew install git openjdk@17 maven node
-```
-
-Verification (run after install):
+Verification (run after install): (Close your powershell terminal restart your computer than continue)
 
 ```bash
 git --version
@@ -151,9 +119,36 @@ Troubleshooting
 
 Optional: commit the added scripts to your repo and share them with contributors so they can run the same one-shot setup.
 
-If you'd like, I can:
+Answer the following questions in your README:
 
-- Commit these scripts to your repository branch (I already added them locally).
-- Create a small `scripts` README or add a `setup` npm script in `longhornnetwork-web/package.json`.
+a. Did you use AI to code the UI? If so, what were the sources that the AI used, what was the AI good at and what was it not so good at? What did you do to fill in the gaps.
 
-Tell me if you want me to also commit, run the scripts here (where possible), or add Windows `.bat` wrappers.
+AI's Strengths: The AI was exceptionally good at generating the initial structural skeleton of the React components and suggesting different design options and patterns for the UI architecture. It provided a quick way to draft the boilerplate code, saving significant time.
+
+AI's Weaknesses: The AI struggled with creating a truly polished and visually appealing design (beautify/styling) and generating a fully functional, complex algorithm (e.g., the WebSocket logic) that worked seamlessly with the backend. I had to manually fix numerous bugs and logical errors within the generated code.
+
+Filling the Gaps: To address the AI's shortcomings, I relied heavily on external resources for debugging, styling, and implementing complex logic:
+
+YouTube Tutorials: For visual demonstrations of best practices and complex component implementation.
+
+Stack Overflow: For specific error troubleshooting and efficient code snippets.
+
+GeeksforGeeks / Official Documentation: For deep dives into language features, React hooks, and library specifications.
+
+b. If you did not use AI, what sources did you use to learn React, and what were the hardest things to learn?
+
+The hardest thing to learn and implement in this project was definitely the WebSocketServer integration. Establishing and maintaining a reliable, real-time connection between the frontend and the backend was challenging. I had to ensure that both the client-side (frontend) and the server-side (backend) logic handled state updates and connection failures correctly.
+
+Aside from the WebSockets, while the creation of the .jsx component files was generally enjoyable and straightforward, it became quite tedious and repetitive. This is where I let the AI handle the bulk of the component generation, and I subsequently went back to implement the custom styling, logic refinement, and aesthetic beautification.
+
+c. We are planning to cover React next semester for this class, in what unit do you think this would be appropriate to teach?
+
+I strongly recommend integrating React into the curriculum during the unit dedicated to Client-Server Architecture and DNS (Domain Name System).
+
+React, being a framework for building dynamic single-page applications, perfectly encapsulates and implements all the core concepts covered in that unit:
+
+Client-Server Interaction: React components make asynchronous calls (like fetching data via fetch or Axios) to a server/API, demonstrating how the client requests resources.
+
+State Management: It clearly shows how the client (the browser) manages its own state and renders the UI based on server responses.
+
+Real-World Implementation: Introducing it here provides students with a tangible, modern example of how all the theoretical networking and architectural concepts they learned are fully implemented in a functional web application.
